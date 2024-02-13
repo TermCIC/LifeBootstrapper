@@ -9,11 +9,16 @@ The program will generate expected values of life table parameters by creating r
 then calculate following parameters with bootstrap technique:
 
 ## Net reproductive rate (R0)
-𝑅_0=∑1_(𝑥=0)^∞▒〖𝑙_𝑥 𝑚_𝑥 〗
-![image](https://github.com/TermCIC/LifeBootstrapper/assets/32321661/0041a9e3-b4b0-4257-acde-3d5bf8276a9f)
+![image](https://github.com/TermCIC/LifeBootstrapper/assets/32321661/8aa84f59-056a-4c89-92d6-40fd0f6243d9)
 
 ## The mean generation time (Tc)
+![image](https://github.com/TermCIC/LifeBootstrapper/assets/32321661/c338710c-08de-41ab-980c-492cc7b3b949)
+
 ## The intrinsic growth rate (r, rc)
+![image](https://github.com/TermCIC/LifeBootstrapper/assets/32321661/04e2f492-8109-4874-97aa-6b0e8ddf11d0)
+
 ## The finite rate of increase (λ)
+![image](https://github.com/TermCIC/LifeBootstrapper/assets/32321661/735b0f79-13f4-4c04-bad8-cf7b500317b0)
+
 ## Population doubling time (Dt)
 
