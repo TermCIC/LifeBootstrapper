@@ -1,12 +1,12 @@
-# LifeBootstrapper
+# LifeBoot
 
-LifeBootstrapper is a program to generate expected values of life table parameters based on:
+LifeBoot is a program to compute life table parameters and generate expected standard deviations (SDs) and confidence intervals (CIs) of based on:
 (1) a survival/day dataset
 (2) a fecundity/day dataset
 (3) sex ratio of the subject insect species
 
 The program will generate expected values of life table parameters by creating random insects based on these datasets,
-then calculate following parameters with bootstrap technique:
+then calculate SDs and CIs of following parameters with bootstrap technique:
 
 ## Net reproductive rate (R0)
 ![image](https://github.com/TermCIC/LifeBootstrapper/assets/32321661/8aa84f59-056a-4c89-92d6-40fd0f6243d9)
