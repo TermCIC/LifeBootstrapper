@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Life Table Bootstrapper (by Dr. Chun-I Chiu)</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        th, td {
+            border: 1px solid #ccc;
+            padding: 8px;
+            text-align: center;
+        }
+        th {
+            background-color: #f8f8f8;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        canvas {
+            display: block;
+            margin: 20px;
+            max-height: 800px;
+            max-width: 800px;
+        }
+        .input-group {
+            margin-bottom: 15px;
+        }
+        .input-group label {
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Life Table Bootstrapper (by Dr. Chun-I Chiu)</h1>
+    <div class="container">
+        <h2>Input Data</h2>
+        <div class="input-group">
+            <label for="sexRatio">Sex Ratio (e.g., 0.5):</label>
+            <input type="number" id="sexRatio" step="0.01" min="0" max="1" placeholder="Enter sex ratio">
+        </div>
+        <button onclick="addDay()">Add Day</button><br><br>
+        <table id="dataTable">
+            <thead>
+                <tr>
+                    <th>Day</th>
+                    <th>No. of Survival Individuals</th>
+                    <th>Fecundity</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+        <button onclick="processData()">Process Data</button>
+
+        <h2>Results</h2>
+        <div id="results"></div>
+
+        <h2>Visualization</h2>
+        <canvas id="chart"></canvas>
+    </div>
+
+    <script>
+        let dayCount = 0;
+        let chart;
+
+        function addDay() {
+            dayCount++;
+            const tableBody = document.querySelector("#dataTable tbody");
+            const row = document.createElement("tr");
+            row.innerHTML = `
+                <td>${dayCount}</td>
+                <td><input type="number" min="0" placeholder="Enter no. of survival individuals"></td>
+                <td><input type="number" min="0" placeholder="Enter fecundity"></td>
+            `;
+            tableBody.appendChild(row);
+        }
+
+        function processData() {
+            const rows = document.querySelectorAll("#dataTable tbody tr");
+            const survivalIndividuals = [];
+            const fecundities = [];
+            const sexRatio = parseFloat(document.getElementById("sexRatio").value);
+
+            if (isNaN(sexRatio) || sexRatio < 0 || sexRatio > 1) {
+                alert("Please enter a valid sex ratio between 0 and 1.");
+                return;
+            }
+
+            rows.forEach(row => {
+                const survival = parseInt(row.children[1].querySelector("input").value) || 0;
+                const fecundity = parseInt(row.children[2].querySelector("input").value) || 0;
+                survivalIndividuals.push(survival);
+                fecundities.push(fecundity);
+            });
+
+            if (survivalIndividuals.length === 0 || Math.max(...survivalIndividuals) === 0) {
+                alert("Please enter valid data for at least one day.");
+                return;
+            }
+
+            const Nx = survivalIndividuals.map(n => n * sexRatio);
+            const Fx = fecundities;
+            const results = calculateParameters(Nx, Fx);
+            displayResults(results);
+            plotData(results.Lx, results.Mx);
+        }
+
+        function calculateParameters(Nx, Fx) {
+            const N0 = Nx[0];
+            const Lx = Nx.map(n => n / N0);
+            const Mx = Fx.map((fx, i) => (Nx[i] > 0 ? fx / Nx[i] : 0));
+            const LxMx = Lx.map((lx, i) => lx * Mx[i]);
+            const R0 = LxMx.reduce((a, b) => a + b, 0);
+
+            const rc = bisectionMethod(Lx, Mx, 0, 1, 1e-8);
+            const λ = Math.exp(rc);
+            const Dt = Math.log(2) / rc;
+            const Tc = Math.log(R0) / rc;
+
+            return { Lx, Mx, R0, rc, λ, Dt, Tc };
+        }
+
+        function eulerLotka(r, Lx, Mx) {
+            return Lx.reduce((sum, lx, i) => sum + Math.exp(-r * (i + 1)) * lx * Mx[i], 0);
+        }
+
+        function bisectionMethod(Lx, Mx, lower, upper, tol) {
+            let fl = eulerLotka(lower, Lx, Mx) - 1;
+            let fu = eulerLotka(upper, Lx, Mx) - 1;
+
+            while (upper - lower > tol) {
+                const mid = (lower + upper) / 2;
+                const fm = eulerLotka(mid, Lx, Mx) - 1;
+
+                if (fl * fm < 0) {
+                    upper = mid;
+                    fu = fm;
+                } else {
+                    lower = mid;
+                    fl = fm;
+                }
+            }
+            return (lower + upper) / 2;
+        }
+
+        function displayResults(results) {
+            const container = document.getElementById("results");
+            container.innerHTML = `
+                <p><strong>R0:</strong> ${results.R0.toFixed(2)}</p>
+                <p><strong>rc:</strong> ${results.rc.toFixed(4)}</p>
+                <p><strong>λ:</strong> ${results.λ.toFixed(4)}</p>
+                <p><strong>Dt:</strong> ${results.Dt.toFixed(2)}</p>
+                <p><strong>Tc:</strong> ${results.Tc.toFixed(2)}</p>
+            `;
+        }
+
+        function plotData(Lx, Mx) {
+            const ctx = document.getElementById("chart").getContext("2d");
+
+            if (chart) {
+                chart.destroy();
+            }
+
+            const extendedLx = [...Lx, 0];
+            const extendedMx = [...Mx, 0];
+            const labels = Array.from({ length: extendedLx.length }, (_, i) => i + 1);
+
+            chart = new Chart(ctx, {
+                type: "line",
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: "Lx",
+                            data: extendedLx,
+                            borderColor: "red",
+                            fill: false,
+                            yAxisID: "yLx"
+                        },
+                        {
+                            label: "Mx",
+                            data: extendedMx,
+                            borderColor: "blue",
+                            fill: false,
+                            yAxisID: "yMx"
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: "Age (days)"
+                            }
+                        },
+                        yLx: {
+                            type: "linear",
+                            position: "left",
+                            title: {
+                                display: true,
+                                text: "Lx"
+                            }
+                        },
+                        yMx: {
+                            type: "linear",
+                            position: "right",
+                            title: {
+                                display: true,
+                                text: "Mx"
+                            },
+                            grid: {
+                                drawOnChartArea: false
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>
