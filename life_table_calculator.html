@@ -420,7 +420,6 @@
             `;
         }
 
-
         function plotData(Lx, Mx) {
             const ctx = document.getElementById("chart").getContext("2d");
 
@@ -455,11 +454,42 @@
                 },
                 options: {
                     responsive: true,
+                    plugins: {
+                        legend: {
+                            labels: {
+                                font: {
+                                    size: 16, // Increase legend font size
+                                    family: "Arial", // Set font family
+                                },
+                                color: "#333" // Dark color for legend text
+                            }
+                        },
+                        title: {
+                            display: true,
+                            text: "Lx and Mx by Age",
+                            font: {
+                                size: 18, // Increase title font size
+                                family: "Arial"
+                            },
+                            color: "#111" // Dark color for title
+                        }
+                    },
                     scales: {
                         x: {
                             title: {
                                 display: true,
-                                text: "Age (days)"
+                                text: "Age (days)",
+                                font: {
+                                    size: 16, // Increase x-axis title font size
+                                    family: "Arial"
+                                },
+                                color: "#333" // Dark color for x-axis title
+                            },
+                            ticks: {
+                                font: {
+                                    size: 14 // Increase x-axis tick font size
+                                },
+                                color: "#333" // Dark color for x-axis ticks
                             }
                         },
                         yLx: {
@@ -467,7 +497,18 @@
                             position: "left",
                             title: {
                                 display: true,
-                                text: "Lx"
+                                text: "Lx",
+                                font: {
+                                    size: 16, // Increase y-axis title font size
+                                    family: "Arial"
+                                },
+                                color: "#333" // Dark color for y-axis title
+                            },
+                            ticks: {
+                                font: {
+                                    size: 14 // Increase y-axis tick font size
+                                },
+                                color: "#333" // Dark color for y-axis ticks
                             }
                         },
                         yMx: {
@@ -475,7 +516,18 @@
                             position: "right",
                             title: {
                                 display: true,
-                                text: "Mx"
+                                text: "Mx",
+                                font: {
+                                    size: 16, // Increase y-axis title font size
+                                    family: "Arial"
+                                },
+                                color: "#333" // Dark color for y-axis title
+                            },
+                            ticks: {
+                                font: {
+                                    size: 14 // Increase y-axis tick font size
+                                },
+                                color: "#333" // Dark color for y-axis ticks
                             },
                             grid: {
                                 drawOnChartArea: false
@@ -485,6 +537,7 @@
                 }
             });
         }
+
     </script>
 </body>
 
