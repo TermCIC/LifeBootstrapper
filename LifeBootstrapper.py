@@ -152,7 +152,7 @@ def get_Dt(Nx, Fx, female_ratio):
     return results['Dt'].iloc[0]
 
 
-def boot_parameters(individuals, indices, Nx, Fx, female_ratio):
+def boot_parameters(indices, Nx, Fx, female_ratio):
     dataset = random_dataset(Nx)
     dataset = random_female(dataset, female_ratio)
     Nx_sampled = dataset.iloc[:, indices].sum(axis=1) / female_ratio
@@ -176,7 +176,7 @@ def run_lt(Nx, Fx, female_ratio):
         print(f"Bootstrapping procedure: Conducted {_}/{R} times, with {_ * Nx[0]} random insects being created.")
         # Sample indices with replacement
         indices = np.random.choice(individuals, size=N, replace=True) - 1
-        R0, Tc, rc, λ, Dt = boot_parameters(individuals, indices, Nx, Fx, female_ratio)
+        R0, Tc, rc, λ, Dt = boot_parameters(indices, Nx, Fx, female_ratio)
         R0_samples.append(R0)
         Tc_samples.append(Tc)
         rc_samples.append(rc)

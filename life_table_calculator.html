@@ -23,6 +23,21 @@
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
             border-radius: 8px;
         }
+        .results-container {
+            display: flex;
+            justify-content: space-between;
+            gap: 20px;
+        }
+        .results-section {
+            width: 48%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            background-color: #f9f9f9;
+        }
+        .results-section h3 {
+            margin-top: 0;
+        }
         table {
             width: 100%;
             border-collapse: collapse;
@@ -80,7 +95,7 @@
             </thead>
             <tbody></tbody>
         </table>
-        <button onclick="processData()">Process Data</button>
+        <button onclick="processData()">Calculate Life Table</button>
 
         <h2>Results</h2>
         <div id="results"></div>
@@ -131,7 +146,8 @@
             const Nx = survivalIndividuals
             const Fx = fecundities;
             const results = calculateParameters(Nx, Fx, femaleRatio);
-            displayResults(results);
+            const bootResults = runLt(Nx, Fx, femaleRatio);
+            displayResults(results, bootResults);
             plotData(results.Lx, results.Mx);
         }
 
@@ -174,16 +190,208 @@
             return (lower + upper) / 2;
         }
 
-        function displayResults(results) {
+        function guessIndividualData(Nx) {
+            const ageSurvival = [];
+            let survival = 1;
+
+            for (let i = 0; i < Nx.length; i++) {
+                if (survival === 1) {
+                    if (i === 0) {
+                        ageSurvival.push(survival);
+                    } else {
+                        const probability = Nx[i] / Nx[i - 1];
+                        survival = Math.random() < probability ? 1 : 0; // Random choice between 0 and 1 based on probability
+                        ageSurvival.push(survival);
+                    }
+                } else {
+                    ageSurvival.push(0);
+                }
+            }
+            return ageSurvival;
+        }
+
+        function randomDataset(Nx) {
+            const N0 = Nx[0]; // The number of individuals to simulate
+            const dataset = { V1: Array.from({ length: Nx.length }, (_, i) => i + 1) }; // Create an object with V1 as the first column (age)
+
+            for (let i = 0; i < N0; i++) {
+                const individual = guessIndividualData(Nx); // Simulate individual survival data
+                dataset[`individual_${i + 1}`] = individual; // Add the individual's data to the dataset
+            }
+
+            return dataset;
+        }
+        
+        function randomFemale(dataset, femaleRatio) {
+            const individuals = Object.keys(dataset).filter(key => key.startsWith("individual_")); // Get all individual columns
+
+            individuals.forEach(individualKey => {
+                const isFemale = Math.random() < femaleRatio ? 1 : 0; // Randomly assign gender based on femaleRatio
+                dataset[individualKey] = dataset[individualKey].map(value => value * isFemale); // Apply gender to the dataset
+            });
+
+            return dataset;
+        }
+
+        function getR0(Nx, Fx, femaleRatio) {
+            const results = calculateParameters(Nx, Fx, femaleRatio);
+            return results.R0; // Return the R0 value from the results object
+        }
+
+        function getTc(Nx, Fx, femaleRatio) {
+            const results = calculateParameters(Nx, Fx, femaleRatio);
+            return results.Tc; // Return the Tc value from the results object
+        }
+
+        function getRc(Nx, Fx, femaleRatio) {
+            const results = calculateParameters(Nx, Fx, femaleRatio);
+            return results.rc; // Return the rc value from the results object
+        }
+
+        function getLambda(Nx, Fx, femaleRatio) {
+            const results = calculateParameters(Nx, Fx, femaleRatio);
+            return results.λ; // Return the λ value from the results object
+        }
+
+        function getDt(Nx, Fx, femaleRatio) {
+            const results = calculateParameters(Nx, Fx, femaleRatio);
+            return results.Dt; // Return the Dt value from the results object
+        }
+
+        function bootParameters(indices, Nx, Fx, femaleRatio) {
+            // Step 1: Generate a random dataset and assign genders
+            let dataset = randomDataset(Nx);
+            dataset = randomFemale(dataset, femaleRatio);
+
+            // Step 2: Sample data based on indices
+            const NxSampled = Array(dataset.V1.length).fill(0); // Initialize sampled Nx array
+            indices.forEach(index => {
+                const individualKey = `individual_${index + 1}`;
+                if (dataset[individualKey]) {
+                    dataset[individualKey].forEach((value, i) => {
+                        NxSampled[i] += value;
+                    });
+                }
+            });
+
+            // Adjust sampled Nx based on the female ratio
+            const NxSampledAdjusted = NxSampled.map(n => n / femaleRatio);
+
+            // Step 3: Calculate parameters
+            const R0 = getR0(NxSampledAdjusted, Fx, femaleRatio);
+            const Tc = getTc(NxSampledAdjusted, Fx, femaleRatio);
+            const rc = getRc(NxSampledAdjusted, Fx, femaleRatio);
+            const λ = getLambda(NxSampledAdjusted, Fx, femaleRatio);
+            const Dt = getDt(NxSampledAdjusted, Fx, femaleRatio);
+
+            // Step 4: Return the results
+            return { R0, Tc, rc, λ, Dt };
+        }
+
+        function runLt(Nx, Fx, femaleRatio) {
+            const individuals = Array.from({ length: Nx[0] }, (_, i) => i + 1); // Create individual IDs
+            const R = 10000; // Number of bootstrap iterations
+            const N = individuals.length; // Number of individuals
+
+            // Initialize result storage
+            const R0Samples = [];
+            const TcSamples = [];
+            const rcSamples = [];
+            const lambdaSamples = [];
+            const DtSamples = [];
+
+            // Bootstrapping process
+            for (let iteration = 0; iteration < R; iteration++) {
+                console.log(`Bootstrapping procedure: Conducted ${iteration + 1}/${R}`);
+
+                // Sample indices with replacement
+                const indices = Array.from({ length: N }, () => individuals[Math.floor(Math.random() * N)]);
+
+                // Perform bootstrapping
+                const { R0, Tc, rc, λ, Dt } = bootParameters(indices, Nx, Fx, femaleRatio);
+
+                // Store results only if they are valid
+                if (isFinite(R0) && R0 >= 0) {
+                    R0Samples.push(R0);
+                }
+
+                if (isFinite(Tc) && Tc >= 0) {
+                    TcSamples.push(Tc);
+                }
+
+                if (isFinite(rc) && rc >= 0) {
+                    rcSamples.push(rc);
+                }
+
+                if (isFinite(λ) && λ >= 0) {
+                    lambdaSamples.push(λ);
+                }
+
+                if (isFinite(Dt) && Dt >= 0) {
+                    DtSamples.push(Dt);
+                }
+            }
+
+            // Helper function to calculate statistics
+            function calcStats(samples) {
+                const mean = samples.reduce((a, b) => a + b, 0) / samples.length;
+                const stdDev = Math.sqrt(samples.map(x => (x - mean) ** 2).reduce((a, b) => a + b, 0) / samples.length);
+                const sorted = [...samples].sort((a, b) => a - b);
+                const quantile = (arr, q) => arr[Math.floor(q * arr.length)];
+                return { mean, stdDev, lower95: quantile(sorted, 0.025), upper95: quantile(sorted, 0.975) };
+            }
+
+            // Calculate statistics for each parameter
+            const R0Stats = calcStats(R0Samples);
+            const TcStats = calcStats(TcSamples);
+            const rcStats = calcStats(rcSamples);
+            const lambdaStats = calcStats(lambdaSamples);
+            const DtStats = calcStats(DtSamples);
+
+            // Compile results into an object
+            const result = {
+                R0: R0Stats,
+                Tc: TcStats,
+                rc: rcStats,
+                λ: lambdaStats,
+                Dt: DtStats,
+            };
+            return result;
+        }
+
+        function displayResults(results, bootResults) {
             const container = document.getElementById("results");
+            const { R0, rc, λ, Dt, Tc } = results;
+
+            // Format bootstrapping results
+            const formatBootResult = (stat) =>
+                `Mean: ${stat.mean.toFixed(2)}, SD: ${stat.stdDev.toFixed(2)}, 95% CI: [${stat.lower95.toFixed(2)}, ${stat.upper95.toFixed(2)}]`;
+
             container.innerHTML = `
-                <p><strong>R0:</strong> ${results.R0.toFixed(2)}</p>
-                <p><strong>rc:</strong> ${results.rc.toFixed(4)}</p>
-                <p><strong>λ:</strong> ${results.λ.toFixed(4)}</p>
-                <p><strong>Dt:</strong> ${results.Dt.toFixed(2)}</p>
-                <p><strong>Tc:</strong> ${results.Tc.toFixed(2)}</p>
+                <div class="results-container">
+                    <!-- Calculated Parameters -->
+                    <div class="results-section">
+                        <h3>Calculated Parameters</h3>
+                        <p><strong>R0:</strong> ${R0.toFixed(2)}</p>
+                        <p><strong>rc:</strong> ${rc.toFixed(4)}</p>
+                        <p><strong>λ:</strong> ${λ.toFixed(4)}</p>
+                        <p><strong>Dt:</strong> ${Dt.toFixed(2)}</p>
+                        <p><strong>Tc:</strong> ${Tc.toFixed(2)}</p>
+                    </div>
+                    
+                    <!-- Bootstrapping Results -->
+                    <div class="results-section">
+                        <h3>Bootstrapping Results</h3>
+                        <p><strong>R0:</strong> ${formatBootResult(bootResults.R0)}</p>
+                        <p><strong>rc:</strong> ${formatBootResult(bootResults.rc)}</p>
+                        <p><strong>λ:</strong> ${formatBootResult(bootResults.λ)}</p>
+                        <p><strong>Dt:</strong> ${formatBootResult(bootResults.Dt)}</p>
+                        <p><strong>Tc:</strong> ${formatBootResult(bootResults.Tc)}</p>
+                    </div>
+                </div>
             `;
         }
+
 
         function plotData(Lx, Mx) {
             const ctx = document.getElementById("chart").getContext("2d");
