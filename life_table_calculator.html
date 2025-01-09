@@ -66,8 +66,8 @@
     <div class="container">
         <h2>Input Data</h2>
         <div class="input-group">
-            <label for="sexRatio">Sex Ratio (e.g., 0.5):</label>
-            <input type="number" id="sexRatio" step="0.01" min="0" max="1" value="0.5" placeholder="Enter sex ratio">
+            <label for="femaleRatio">Female Ratio (e.g., 0.5):</label>
+            <input type="number" id="femaleRatio" step="0.01" min="0" max="1" value="0.5" placeholder="Enter female ratio">
         </div>
         <button onclick="addDay()">Add Day</button><br><br>
         <table id="dataTable">
@@ -109,9 +109,9 @@
             const rows = document.querySelectorAll("#dataTable tbody tr");
             const survivalIndividuals = [];
             const fecundities = [];
-            const sexRatio = parseFloat(document.getElementById("sexRatio").value);
+            const femaleRatio = parseFloat(document.getElementById("femaleRatio").value);
 
-            if (isNaN(sexRatio) || sexRatio < 0 || sexRatio > 1) {
+            if (isNaN(femaleRatio) || femaleRatio < 0 || femaleRatio > 1) {
                 alert("Please enter a valid sex ratio between 0 and 1.");
                 return;
             }
@@ -128,16 +128,17 @@
                 return;
             }
 
-            const Nx = survivalIndividuals.map(n => n * sexRatio);
+            const Nx = survivalIndividuals
             const Fx = fecundities;
-            const results = calculateParameters(Nx, Fx);
+            const results = calculateParameters(Nx, Fx, femaleRatio);
             displayResults(results);
             plotData(results.Lx, results.Mx);
         }
 
-        function calculateParameters(Nx, Fx) {
-            const N0 = Nx[0];
-            const Lx = Nx.map(n => n / N0);
+        function calculateParameters(Nx, Fx, femaleRatio) {
+            const NFex = Nx.map(n => n * femaleRatio);
+            const N0 = NFex[0];
+            const Lx = NFex.map(n => n / N0);
             const Mx = Fx.map((fx, i) => (Nx[i] > 0 ? fx / Nx[i] : 0));
             const LxMx = Lx.map((lx, i) => lx * Mx[i]);
             const R0 = LxMx.reduce((a, b) => a + b, 0);

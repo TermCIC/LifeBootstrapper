@@ -285,6 +285,3 @@ def run(Name=None, Trt=None, Nx=None, Fx=None, Sr=None):
             output = run_lt(Nx, Fx, Sr)
             output.to_csv(f'{Name}_{Trt}.csv', encoding='ascii', errors='replace', index=False)
             return run()
-
-
-run()
