@@ -86,9 +86,9 @@
 
         canvas {
             display: block;
-            margin: 20px;
-            max-height: 800px;
-            max-width: 800px;
+            margin: auto auto;
+            height: 300px;
+            width: 300px;
         }
 
         .input-group {
@@ -129,7 +129,10 @@
         <div id="results"></div>
 
         <h2>Visualization</h2>
-        <canvas id="chart"></canvas>
+        <div class="table-container">
+            <canvas id="chart"></canvas>
+        </div>
+        <button onclick="downloadChart()">Download Figure</button>
     </div>
 
     <script>
@@ -454,24 +457,26 @@
                 },
                 options: {
                     responsive: true,
+                    maintainAspectRatio: true,
+                    aspectRatio: 1, // Maintain 2:1 width-to-height ratio
                     plugins: {
                         legend: {
                             labels: {
                                 font: {
-                                    size: 16, // Increase legend font size
-                                    family: "Arial", // Set font family
+                                    size: 16,
+                                    family: "Arial"
                                 },
-                                color: "#333" // Dark color for legend text
+                                color: "black"
                             }
                         },
                         title: {
                             display: true,
                             text: "Lx and Mx by Age",
                             font: {
-                                size: 18, // Increase title font size
+                                size: 18,
                                 family: "Arial"
                             },
-                            color: "#111" // Dark color for title
+                            color: "black"
                         }
                     },
                     scales: {
@@ -480,17 +485,22 @@
                                 display: true,
                                 text: "Age (days)",
                                 font: {
-                                    size: 16, // Increase x-axis title font size
+                                    size: 16,
                                     family: "Arial"
                                 },
-                                color: "#333" // Dark color for x-axis title
+                                color: "black"
                             },
                             ticks: {
                                 font: {
-                                    size: 14 // Increase x-axis tick font size
+                                    size: 14
                                 },
-                                color: "#333" // Dark color for x-axis ticks
-                            }
+                                color: "black"
+                            },
+                            grid: {
+                                drawOnChartArea: false,
+                                color: "black"
+                            },
+                            borderColor: "black"
                         },
                         yLx: {
                             type: "linear",
@@ -499,17 +509,22 @@
                                 display: true,
                                 text: "Lx",
                                 font: {
-                                    size: 16, // Increase y-axis title font size
+                                    size: 16,
                                     family: "Arial"
                                 },
-                                color: "#333" // Dark color for y-axis title
+                                color: "black"
                             },
                             ticks: {
                                 font: {
-                                    size: 14 // Increase y-axis tick font size
+                                    size: 14
                                 },
-                                color: "#333" // Dark color for y-axis ticks
-                            }
+                                color: "black"
+                            },
+                            grid: {
+                                drawOnChartArea: false,
+                                color: "black"
+                            },
+                            borderColor: "black"
                         },
                         yMx: {
                             type: "linear",
@@ -518,24 +533,33 @@
                                 display: true,
                                 text: "Mx",
                                 font: {
-                                    size: 16, // Increase y-axis title font size
+                                    size: 16,
                                     family: "Arial"
                                 },
-                                color: "#333" // Dark color for y-axis title
+                                color: "black"
                             },
                             ticks: {
                                 font: {
-                                    size: 14 // Increase y-axis tick font size
+                                    size: 14
                                 },
-                                color: "#333" // Dark color for y-axis ticks
+                                color: "black"
                             },
                             grid: {
-                                drawOnChartArea: false
-                            }
+                                drawOnChartArea: false,
+                                color: "black"
+                            },
+                            borderColor: "black"
                         }
                     }
                 }
             });
+        }
+
+        function downloadChart() {
+            const link = document.createElement("a");
+            link.download = "chart.png";
+            link.href = document.getElementById("chart").toDataURL();
+            link.click();
         }
 
     </script>
