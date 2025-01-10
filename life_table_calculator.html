@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Life Table Calculator</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.min.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -45,12 +46,9 @@
             margin-top: 0;
         }
 
-        /* Responsive table container */
         .table-container {
             overflow-x: auto;
-            /* Enable horizontal scrolling */
             margin-bottom: 20px;
-            /* Add some spacing */
         }
 
         table {
@@ -64,7 +62,6 @@
             padding: 8px;
             text-align: center;
             word-wrap: break-word;
-            /* Break long words to prevent overflow */
         }
 
         th {
@@ -97,6 +94,26 @@
 
         .input-group label {
             margin-right: 10px;
+        }
+
+        .explanation {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #f9f9f9;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+        }
+
+        .explanation h3 {
+            margin-top: 0;
+        }
+
+        .explanation p {
+            margin-bottom: 10px;
+        }
+
+        .explanation ul {
+            padding-left: 20px;
         }
     </style>
 </head>
@@ -133,6 +150,30 @@
             <canvas id="chart"></canvas>
         </div>
         <button onclick="downloadChart()">Download Figure</button>
+
+        <div class="explanation">
+            <h3>Life Table Parameters and Formulas</h3>
+            <p><strong>R<sub>0</sub> (Net Reproductive Rate):</strong> The average number of offspring an individual is expected to produce over its lifetime.</p>
+            <p><em>Formula:</em> \( R_0 = \sum (L_x \times M_x) \)</p>
+
+            <p><strong>r<sub>c</sub> (Intrinsic Growth Rate):</strong> The rate of population increase under ideal conditions.</p>
+            <p><em>Formula:</em> Find \( r \) such that \( \sum \left( e^{-r \cdot x} \times L_x \times M_x \right) = 1 \)</p>
+
+            <p><strong>λ (Finite Growth Rate):</strong> The growth rate per generation, calculated as \( e^{r_c} \).</p>
+            <p><em>Formula:</em> \( \lambda = e^{r_c} \)</p>
+
+            <p><strong>D<sub>t</sub> (Doubling Time):</strong> The time required for the population to double in size.</p>
+            <p><em>Formula:</em> \( D_t = \frac{\ln(2)}{r_c} \)</p>
+
+            <p><strong>T<sub>c</sub> (Mean Generation Time):</strong> The average age of reproduction.</p>
+            <p><em>Formula:</em> \( T_c = \frac{\ln(R_0)}{r_c} \)</p>
+
+            <h4>Parameter Explanation:</h4>
+            <ul>
+                <li><strong>L<sub>x</sub>:</strong> Proportion of individuals surviving at age \( x \).</li>
+                <li><strong>M<sub>x</sub>:</strong> Number of offspring produced by an individual at age \( x \).</li>
+            </ul>
+        </div>
     </div>
 
     <script>
