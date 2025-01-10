@@ -136,7 +136,7 @@
     </div>
 
     <script>
-        let dayCount = 0;
+        let dayCount = -1;
         let chart;
 
         function addDay() {
@@ -432,7 +432,7 @@
 
             const extendedLx = [...Lx, 0];
             const extendedMx = [...Mx, 0];
-            const labels = Array.from({ length: extendedLx.length }, (_, i) => i + 1);
+            const labels = Array.from({ length: extendedLx.length }, (_, i) => i);
 
             chart = new Chart(ctx, {
                 type: "line",
